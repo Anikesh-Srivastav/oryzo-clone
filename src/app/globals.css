@@ -1,26 +1,254 @@
-@import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Bebas+Neue&display=swap');
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+* { margin: 0; padding: 0; box-sizing: border-box; }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
+html { scroll-behavior: auto; }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: #0a0a0a;
+  color: #f0ece4;
+  font-family: 'Inter', sans-serif;
+  overflow-x: hidden;
+}
+
+/* ─── HERO SCROLL STRUCTURE ─── */
+.hero-wrapper {
+  position: relative;
+  height: 500vh;
+}
+
+.hero-sticky {
+  position: sticky;
+  top: 0;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* ─── DESK BACKGROUND ─── */
+.desk-bg {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  z-index: 0;
+  /* opacity driven by JS */
+}
+
+.desk-wood {
+  width: 28%;
+  height: 100%;
+  background: linear-gradient(180deg, #b8824a 0%, #a5703c 40%, #c49050 100%);
+}
+
+.desk-mat {
+  flex: 1;
+  height: 100%;
+  background-color: #2e5940;
+  background-image:
+    linear-gradient(rgba(255,255,255,0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.06) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
+/* Dark overlay — starts invisible, JS fades it in */
+.desk-dark-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  background: #0a0a0a;
+  opacity: 0;   /* JS controls this */
+  pointer-events: none;
+}
+
+/* ─── PHASE 1 TEXTS ─── */
+/* Opacity driven by JS. Layout only here. */
+.phase1-texts {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  pointer-events: none;
+}
+
+.p1-nav {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24px 32px;
+}
+
+.p1-brand {
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  color: #f0ece4;
+}
+
+.p1-nav-links {
+  display: flex;
+  gap: 28px;
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  font-weight: 500;
+  text-transform: uppercase;
+}
+.p1-nav-links a { text-decoration: none; color: #f0ece4; opacity: 0.8; }
+
+.p1-tagline {
+  position: absolute;
+  top: 28px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 10px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgba(240,236,228,0.7);
+  white-space: nowrap;
+}
+
+.p1-descriptor {
+  position: absolute;
+  bottom: 80px;
+  left: 32px;
+  max-width: 210px;
+}
+.p1-descriptor-headline {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  line-height: 1.6;
+  margin-bottom: 16px;
+}
+.p1-descriptor-sub {
+  font-size: 11px;
+  font-weight: 300;
+  color: rgba(240,236,228,0.6);
+  line-height: 1.7;
+}
+
+.p1-body-right {
+  position: absolute;
+  right: 48px;
+  top: 50%;
+  transform: translateY(-50%);
+  max-width: 340px;
+  font-size: 20px;
+  font-weight: 400;
+  line-height: 1.5;
+}
+
+.p1-scroll-hint {
+  position: absolute;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  font-size: 9px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(240,236,228,0.55);
+  pointer-events: none;
+  /* opacity driven by JS */
+}
+
+.scroll-arrow {
+  width: 12px; height: 12px;
+  border-right: 1px solid rgba(240,236,228,0.4);
+  border-bottom: 1px solid rgba(240,236,228,0.4);
+  transform: rotate(45deg);
+  animation: bounce 1.6s ease-in-out infinite;
+}
+@keyframes bounce {
+  0%, 100% { transform: rotate(45deg) translateY(0); }
+  50%       { transform: rotate(45deg) translateY(4px); }
+}
+
+/* ─── PHASE 2 NAV ─── */
+.p2-nav {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  z-index: 25;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24px 32px;
+  pointer-events: none;
+  /* opacity=0 set inline, driven by JS */
+}
+.p2-brand {
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  color: #f0ece4;
+}
+.p2-nav-links {
+  display: flex;
+  gap: 28px;
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  font-weight: 500;
+  text-transform: uppercase;
+}
+.p2-nav-links a { text-decoration: none; color: rgba(240,236,228,0.75); }
+.p2-nav-links a.active {
+  color: #f0ece4;
+  border-bottom: 1px solid rgba(240,236,228,0.6);
+  padding-bottom: 2px;
+}
+
+/* ─── PHASE 2 FEATURE TEXTS ─── */
+/* opacity=0 set inline, driven by JS */
+
+.p2-left-text {
+  position: absolute;
+  left: 32px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 25;
+  max-width: 270px;
+  pointer-events: none;
+}
+.p2-headline {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(36px, 4.2vw, 60px);
+  line-height: 1.0;
+  letter-spacing: 0.02em;
+  color: rgba(200,190,175,0.85);
+}
+
+.p2-body-right {
+  position: absolute;
+  right: 48px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 25;
+  max-width: 300px;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 1.55;
+  color: rgba(240,236,228,0.85);
+  pointer-events: none;
+}
+
+/* ─── AFTER HERO ─── */
+.after-hero {
+  background: #0a0a0a;
+  min-height: 60vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 80px 32px;
+}
+.after-hero-punchline {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(48px, 8vw, 100px);
+  color: #f0ece4;
+  letter-spacing: 0.02em;
+  text-align: center;
 }
