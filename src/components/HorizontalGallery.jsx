@@ -9,13 +9,37 @@ const THUMB_H = 178;   // px
 const THUMB_GAP = 16;    // px
 const THUMB_STEP = THUMB_W + THUMB_GAP;   // 146 px per scroll step
 
-// Hardcoded defaults fallback if no generic structure is passed
 const DEFAULT_SLIDES = [
-  { id: 1, gradient: "linear-gradient(160deg,#7a4e2d 0%,#3d2510 55%,#130c04 100%)", label: "SO PORTABLE,", sub: "it's wearable" },
-  { id: 2, gradient: "linear-gradient(160deg,#2a5c3e 0%,#122d1e 55%,#040f09 100%)", label: "SO INTELLIGENT,", sub: "it learns you" },
-  { id: 3, gradient: "linear-gradient(160deg,#8c3030 0%,#461818 55%,#160707 100%)", label: "SO CONNECTED,", sub: "always with you" },
-  { id: 4, gradient: "linear-gradient(160deg,#2a3d7a 0%,#121e3d 55%,#040714 100%)", label: "SO MINIMAL,", sub: "it disappears" },
-  { id: 5, gradient: "linear-gradient(160deg,#7a6030 0%,#3d3018 55%,#130f05 100%)", label: "SO INTUITIVE,", sub: "feels natural" },
+  { 
+    id: 1, 
+    gradient: "url('https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=80&w=2000&auto=format&fit=crop') center/cover no-repeat", 
+    label: "SO PORTABLE,", 
+    sub: "it's wearable" 
+  },
+  { 
+    id: 2, 
+    gradient: "url('https://images.unsplash.com/photo-1491553895911-0055eca6402d?q=80&w=2000&auto=format&fit=crop') center/cover no-repeat", 
+    label: "SO INTELLIGENT,", 
+    sub: "it learns you" 
+  },
+  { 
+    id: 3, 
+    gradient: "url('https://images.unsplash.com/photo-1525547719571-a2d4ac8945e2?q=80&w=2000&auto=format&fit=crop') center/cover no-repeat", 
+    label: "SO CONNECTED,", 
+    sub: "always with you" 
+  },
+  { 
+    id: 4, 
+    gradient: "url('https://images.unsplash.com/photo-1483985988355-763728e1935b?q=80&w=2000&auto=format&fit=crop') center/cover no-repeat", 
+    label: "SO MINIMAL,", 
+    sub: "it disappears" 
+  },
+  { 
+    id: 5, 
+    gradient: "url('https://images.unsplash.com/photo-1620121692029-d088224ddc74?q=80&w=2000&auto=format&fit=crop') center/cover no-repeat", 
+    label: "SO INTUITIVE,", 
+    sub: "feels natural" 
+  },
 ];
 
 export function HorizontalGallery({ slides = DEFAULT_SLIDES }) {
