@@ -3,6 +3,7 @@
 import { Canvas } from "@react-three/fiber";
 import { Suspense, useEffect, useRef } from "react";
 import { Scene } from "./Scene";
+import { LoaderOverlay } from "./LoaderOverlay";
 
 export function Hero() {
   const wrapperRef  = useRef(null);
@@ -64,6 +65,7 @@ export function Hero() {
 
   return (
     <>
+      <LoaderOverlay />
       {/* ══ 500vh scroll wrapper ══ */}
       <div className="hero-wrapper" ref={wrapperRef}>
         <div className="hero-sticky">
