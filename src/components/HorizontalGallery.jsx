@@ -61,7 +61,8 @@ export function HorizontalGallery() {
       });
 
       // Synchronized track shifting: both thumb tracks move identical distances.
-      tl.to([thumbRight, thumbLeft], { x: `-=${N * THUMB_STEP}`, ease: "none", duration: N - 1 }, 0);
+      // We traverse (N-1) steps over (N-1) units of duration, perfectly locking them 1:1.
+      tl.to([thumbRight, thumbLeft], { x: `-=${(N - 1) * THUMB_STEP}`, ease: "none", duration: N - 1 }, 0);
       
       // Main frame shifts naturally as a single flex strip (no overlapping possible)
       tl.to(mainFrame, { xPercent: -(N - 1) * (100 / N), ease: "none", duration: N - 1 }, 0);
