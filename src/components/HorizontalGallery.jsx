@@ -9,7 +9,8 @@ const THUMB_H = 178;   // px
 const THUMB_GAP = 16;    // px
 const THUMB_STEP = THUMB_W + THUMB_GAP;   // 146 px per scroll step
 
-const SLIDES = [
+// Hardcoded defaults fallback if no generic structure is passed
+const DEFAULT_SLIDES = [
   { id: 1, gradient: "linear-gradient(160deg,#7a4e2d 0%,#3d2510 55%,#130c04 100%)", label: "SO PORTABLE,", sub: "it's wearable" },
   { id: 2, gradient: "linear-gradient(160deg,#2a5c3e 0%,#122d1e 55%,#040f09 100%)", label: "SO INTELLIGENT,", sub: "it learns you" },
   { id: 3, gradient: "linear-gradient(160deg,#8c3030 0%,#461818 55%,#160707 100%)", label: "SO CONNECTED,", sub: "always with you" },
@@ -17,14 +18,18 @@ const SLIDES = [
   { id: 5, gradient: "linear-gradient(160deg,#7a6030 0%,#3d3018 55%,#130f05 100%)", label: "SO INTUITIVE,", sub: "feels natural" },
 ];
 
-const N = SLIDES.length;
+export function HorizontalGallery({ slides = DEFAULT_SLIDES }) {
+  const N = slides.length;
 
-export function HorizontalGallery() {
   const containerRef = useRef(null);
   const frameContainerRef = useRef(null);
   const thumbTrackRightRef = useRef(null);
   const thumbTrackLeftRef = useRef(null);
   const labelRefs = useRef([]);
+  const mainOuterFrameRef = useRef(null);
+  const nextSectionRef = useRef(null);
+
+  const EXPAND_DUR = 2; // Extra scroll lengths for the final morphing takeover
 
   useEffect(() => {
     gsap.registerPlugin(ScrollTrigger);
@@ -34,13 +39,11 @@ export function HorizontalGallery() {
       const thumbRight = thumbTrackRightRef.current;
       const thumbLeft = thumbTrackLeftRef.current;
       const mainFrame = frameContainerRef.current;
+      const mainOuter = mainOuterFrameRef.current;
 
       // ── initial states ─────────────────────────────────────────────────────
       gsap.set(mainFrame, { xPercent: 0 });
-      
-      // Right Thumb Track: Thumb[0] hidden (left of container), thumb[1..n-1] ready.
       gsap.set(thumbRight, { x: -THUMB_STEP });
-      // Left Thumb Track: offset so Thumb[0] hides off the right side of the left container at prog=0.
       gsap.set(thumbLeft, { x: THUMB_GAP });
 
       // ── master scrub timeline ───────────────────────────────────────────────
@@ -48,11 +51,10 @@ export function HorizontalGallery() {
         scrollTrigger: {
           trigger: container,
           start: "top top",
-          end: () => `+=${(N - 1) * window.innerHeight}`,
+          end: () => `+=${(N - 1 + EXPAND_DUR) * window.innerHeight}`,
           scrub: true,
           invalidateOnRefresh: true,
           onRefresh() {
-            // Re-snap after viewport resize
             gsap.set(mainFrame, { xPercent: 0 });
             gsap.set(thumbRight, { x: -THUMB_STEP });
             gsap.set(thumbLeft, { x: THUMB_GAP });
@@ -60,21 +62,49 @@ export function HorizontalGallery() {
         },
       });
 
-      // Synchronized track shifting: both thumb tracks move identical distances.
-      // We traverse (N-1) steps over (N-1) units of duration, perfectly locking them 1:1.
+      // Synchronized track shifting over the first N-1 units
       tl.to([thumbRight, thumbLeft], { x: `-=${(N - 1) * THUMB_STEP}`, ease: "none", duration: N - 1 }, 0);
-      
-      // Main frame shifts naturally as a single flex strip (no overlapping possible)
       tl.to(mainFrame, { xPercent: -(N - 1) * (100 / N), ease: "none", duration: N - 1 }, 0);
 
       for (let i = 0; i < N - 1; i++) {
-        // ── label cross-fade ─────────────────────────────────────────────────
         tl.to(labelRefs.current[i],
           { opacity: 0, y: -14, ease: "power2.in", duration: 0.28 }, i + 0.22);
         tl.fromTo(labelRefs.current[i + 1],
           { opacity: 0, y: 14 },
           { opacity: 1, y: 0, ease: "power2.out", duration: 0.28 }, i + 0.72);
       }
+
+      // ════ EXPANSION PHASE: Next component takeover ════
+      const tExpand = N - 1; // Time where carousel stops
+
+      // 1. Focus Isolation: Fade out tracks, scroll hint, and final label quickly
+      tl.to([".thumb-strip", ".scroll-hint-wrapper", labelRefs.current[N - 1]], {
+        opacity: 0,
+        ease: "power2.inOut",
+        duration: 0.4
+      }, tExpand);
+
+      // Fade out the dashed outer frame border & corner dot cleanly
+      tl.to(".gallery-frame-decor", {
+        opacity: 0,
+        ease: "power2.inOut",
+        duration: 0.4
+      }, tExpand);
+
+      // 2. Expansion: Massive zoom of the central image container to completely gorge the screen
+      tl.to(mainOuter, {
+        scale: 6, // Heavy scale to push beyond viewport corners
+        ease: "power1.inOut",
+        duration: EXPAND_DUR
+      }, tExpand);
+
+      // 3. Section Reveal: Fade in the "Next Component" inside the sticky wrapper
+      tl.to(nextSectionRef.current, {
+        opacity: 1,
+        ease: "power2.out",
+        duration: EXPAND_DUR * 0.5
+      }, tExpand + (EXPAND_DUR * 0.5));
+
     });
 
     return () => ctx.revert();
@@ -97,7 +127,7 @@ export function HorizontalGallery() {
     // Outer container establishes the scroll distance.
     <div
       ref={containerRef}
-      style={{ position: "relative", height: `${N * 100}vh` }}
+      style={{ position: "relative", height: `${(N + EXPAND_DUR) * 100}vh` }}
     >
       {/* ── Sticky wrapper ── */}
       <div
@@ -119,7 +149,7 @@ export function HorizontalGallery() {
             zIndex: 20,
           }}
         >
-          {SLIDES.map((s, i) => (
+          {slides.map((s, i) => (
             <div
               key={s.id}
               ref={(el) => (labelRefs.current[i] = el)}
@@ -167,22 +197,36 @@ export function HorizontalGallery() {
             width: frameW,
             aspectRatio: "609 / 784",
             zIndex: 10,
-            outline: "1px dashed rgba(255,255,255,0.18)",
-            padding: "20px", // Internal padding requested
-            boxSizing: "border-box", // Ensure padding eats inward
           }}
         >
-          {/* Corner dot — sits in the padding track */}
-          <div style={{
+          {/* Static decoration boundary (dashed border + dot) */}
+          <div className="gallery-frame-decor" style={{
             position: "absolute",
-            top: 5,
-            right: 5,
-            width: 10,
-            height: 10,
-            borderRadius: "50%",
-            backgroundColor: "rgba(255,255,255,0.55)",
-            zIndex: 20,
-          }} />
+            inset: 0,
+            outline: "1px dashed rgba(255,255,255,0.18)"
+          }}>
+            {/* Corner dot */}
+            <div style={{
+              position: "absolute",
+              top: 5,
+              right: 5,
+              width: 10,
+              height: 10,
+              borderRadius: "50%",
+              backgroundColor: "rgba(255,255,255,0.55)",
+            }} />
+          </div>
+
+          {/* Sibling: The inner image flex wrapper with padding */}
+          {/* This wrapper scales up massively, leaving the decoration behind */}
+          <div ref={mainOuterFrameRef} style={{
+            position: "absolute",
+            inset: 0,
+            padding: "20px", // Internal padding requested
+            boxSizing: "border-box", // Ensure padding eats inward
+            originX: 0.5,
+            originY: 0.5,
+          }}>
 
           {/* Inner container to restrict the sliding frame Layers */}
           <div style={{
@@ -205,7 +249,7 @@ export function HorizontalGallery() {
               willChange: "transform",
             }}
           >
-            {SLIDES.map((s) => (
+            {slides.map((s) => (
               <div
                 key={s.id}
                 style={{
@@ -238,10 +282,12 @@ export function HorizontalGallery() {
             ))}
           </div>
           </div>
+          </div>
         </div>
 
         {/* ── Left Thumbnail Strip ── */}
         <div
+          className="thumb-strip"
           style={{
             position: "absolute",
             top: "50%",
@@ -265,7 +311,7 @@ export function HorizontalGallery() {
               willChange: "transform",
             }}
           >
-            {SLIDES.map((s) => (
+            {slides.map((s) => (
               <div
                 key={s.id}
                 style={{
@@ -281,6 +327,7 @@ export function HorizontalGallery() {
 
         {/* ── Right Thumbnail Strip ── */}
         <div
+          className="thumb-strip"
           style={{
             position: "absolute",
             top: "50%",
@@ -304,7 +351,7 @@ export function HorizontalGallery() {
               willChange: "transform",
             }}
           >
-            {SLIDES.map((s) => (
+            {slides.map((s) => (
               <div
                 key={s.id}
                 style={{
@@ -319,7 +366,7 @@ export function HorizontalGallery() {
         </div>
 
         {/* ── Scroll hint ── */}
-        <div style={{
+        <div className="scroll-hint-wrapper" style={{
           position: "absolute",
           bottom: 28,
           left: "50%",
@@ -342,6 +389,34 @@ export function HorizontalGallery() {
             scroll
           </span>
         </div>
+
+        {/* ── EXPANSION PHASE NEXT COMPONENT (Morphs in seamlessly) ── */}
+        <div
+          ref={nextSectionRef}
+          style={{
+            position: "absolute",
+            inset: 0,
+            zIndex: 30, // rendered above the zoomed image
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            opacity: 0,
+            pointerEvents: "none",
+            backgroundColor: "rgba(0,0,0,0.5)", // slight dim to make text pop
+            backdropFilter: "blur(5px)", // blurs the zoomed-in image background
+          }}
+        >
+           {/* Replace this div gracefully later with the actual Next Component if needed */}
+           <div style={{ textAlign: "center", color: "#fff" }}>
+               <h2 style={{ fontSize: "5vw", fontWeight: 300, letterSpacing: "-0.02em" }}>
+                 The Next Chapter.
+               </h2>
+               <p style={{ opacity: 0.6, fontSize: "1.2vw", marginTop: "1rem" }}>
+                 Seamlessly transitioned without a section jump.
+               </p>
+           </div>
+        </div>
+
       </div>
     </div>
   );
