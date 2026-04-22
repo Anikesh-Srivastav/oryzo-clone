@@ -18,9 +18,12 @@ export function LenisProvider({ children }) {
     gsap.registerPlugin(ScrollTrigger);
 
     const lenis = new Lenis({
-      duration: 1.2,
-      easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+      // `lerp` is a friction-based approach rather than fixed-duration easing. 
+      // It yields an exceptionally premium, heavy, and unbounded buttery feel (0.05 - 0.1 is standard).
+      lerp: 0.07, 
+      wheelMultiplier: 1.0, 
       smoothWheel: true,
+      syncTouch: true, // Syncs touch scroll so dragging isn't disconnected
     });
 
     // Keep ScrollTrigger scroll-position in sync with Lenis
