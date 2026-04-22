@@ -156,7 +156,7 @@ export function HorizontalGallery() {
           ))}
         </div>
 
-        {/* ── Main frame — the overflow:hidden dual-reveal container ── */}
+        {/* ── Main frame — the outer boundary with dashed border ── */}
         <div
           style={{
             position: "absolute",
@@ -165,16 +165,17 @@ export function HorizontalGallery() {
             transform: "translate(-50%, -50%)",
             width: frameW,
             aspectRatio: "609 / 784",
-            overflow: "hidden",
             zIndex: 10,
             outline: "1px dashed rgba(255,255,255,0.18)",
+            padding: "20px", // Internal padding requested
+            boxSizing: "border-box", // Ensure padding eats inward
           }}
         >
-          {/* Corner dot */}
+          {/* Corner dot — sits in the padding track */}
           <div style={{
             position: "absolute",
-            top: 12,
-            right: 12,
+            top: 5,
+            right: 5,
             width: 10,
             height: 10,
             borderRadius: "50%",
@@ -182,7 +183,15 @@ export function HorizontalGallery() {
             zIndex: 20,
           }} />
 
-          {/* Flex container holding all slides seamlessly side-by-side */}
+          {/* Inner container to restrict the sliding frame Layers */}
+          <div style={{
+            position: "relative",
+            width: "100%",
+            height: "100%",
+            overflow: "hidden",
+            borderRadius: "4px", // Subtle softening of the inner frame corners
+          }}>
+            {/* Flex container holding all slides seamlessly side-by-side */}
           <div
             ref={frameContainerRef}
             style={{
@@ -226,6 +235,7 @@ export function HorizontalGallery() {
                 </div>
               </div>
             ))}
+          </div>
           </div>
         </div>
 
