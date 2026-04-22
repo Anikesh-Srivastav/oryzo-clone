@@ -8,7 +8,7 @@ const ORANGE = "#ff7d33";
 const DASH = "1px dashed rgba(255,255,255,0.4)";
 
 // Prevents the background from flashing before the loader covers it
-const LOADER_BG = "#0a0a0a";
+const LOADER_BG = "#2e5940";
 
 function BezierHandle({ isVertical, size = "60px" }) {
   return (
