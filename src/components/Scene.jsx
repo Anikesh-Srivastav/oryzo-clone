@@ -2,7 +2,7 @@
 
 import { useRef } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
-import { Environment, Center } from "@react-three/drei";
+import { Environment, Center, Lightformer } from "@react-three/drei";
 import * as THREE from "three";
 
 import { Model as Cookie } from "./model/Cookie";
@@ -154,7 +154,14 @@ export function Scene({ progressRef }) {
         castShadow shadow-mapSize={[2048, 2048]}
       />
       <directionalLight position={[-5, 3, 2]} intensity={0.5} color="#c8d8ff" />
-      <Environment preset="studio" environmentIntensity={0.35} />
+      <Environment resolution={256} environmentIntensity={0.35}>
+        {/* Programmatic environment map that works 100% offline without GitHub fetching */}
+        <group rotation={[-Math.PI / 2, 0, 0]}>
+          <Lightformer intensity={4} position={[0, 5, -9]} scale={[10, 10, 1]} />
+          <Lightformer intensity={2} position={[-5, 1, -1]} rotation-y={Math.PI / 2} scale={[10, 2, 1]} />
+          <Lightformer intensity={2} position={[10, 1, 0]} rotation-y={-Math.PI / 2} scale={[20, 2, 1]} />
+        </group>
+      </Environment>
 
       {/* Props — aligned to match the reference design */}
       <group

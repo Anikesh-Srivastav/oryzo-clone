@@ -50,10 +50,19 @@ export function HorizontalGallery({ slides = DEFAULT_SLIDES }) {
   const thumbTrackRightRef = useRef(null);
   const thumbTrackLeftRef = useRef(null);
   const labelRefs = useRef([]);
+  const galleryFrameContainerRef = useRef(null);
   const mainOuterFrameRef = useRef(null);
+  const innerClipRef = useRef(null);
   const nextSectionRef = useRef(null);
 
-  const EXPAND_DUR = 2; // Extra scroll lengths for the final morphing takeover
+  // Split UI refs
+  const leftGlassRef = useRef(null);
+  const topNavRef = useRef(null);
+  const bottomTextRef = useRef(null);
+
+  const EXPAND_DUR = 2; // Extra scroll lengths for the morphing takeover
+  const READ_DUR = 2; // Scroll length to hold the final design
+  const TOTAL_DUR = N - 1 + EXPAND_DUR + READ_DUR;
 
   useEffect(() => {
     gsap.registerPlugin(ScrollTrigger);
@@ -69,13 +78,14 @@ export function HorizontalGallery({ slides = DEFAULT_SLIDES }) {
       gsap.set(mainFrame, { xPercent: 0 });
       gsap.set(thumbRight, { x: -THUMB_STEP });
       gsap.set(thumbLeft, { x: THUMB_GAP });
+      if (leftGlassRef.current) gsap.set(leftGlassRef.current, { xPercent: -100 });
 
       // ── master scrub timeline ───────────────────────────────────────────────
       const tl = gsap.timeline({
         scrollTrigger: {
           trigger: container,
           start: "top top",
-          end: () => `+=${(N - 1 + EXPAND_DUR) * window.innerHeight}`,
+          end: () => `+=${TOTAL_DUR * window.innerHeight}`,
           scrub: true,
           invalidateOnRefresh: true,
           onRefresh() {
@@ -104,6 +114,7 @@ export function HorizontalGallery({ slides = DEFAULT_SLIDES }) {
       // 1. Focus Isolation: Fade out tracks, scroll hint, and final label quickly
       tl.to([".thumb-strip", ".scroll-hint-wrapper", labelRefs.current[N - 1]], {
         opacity: 0,
+        y: -30,
         ease: "power2.inOut",
         duration: 0.4
       }, tExpand);
@@ -115,19 +126,44 @@ export function HorizontalGallery({ slides = DEFAULT_SLIDES }) {
         duration: 0.4
       }, tExpand);
 
-      // 2. Expansion: Massive zoom of the central image container to completely gorge the screen
-      tl.to(mainOuter, {
-        scale: 6, // Heavy scale to push beyond viewport corners
-        ease: "power1.inOut",
+      // 2. Expansion: Massive zoom natively to the exact window bounds (over-expanded to kill any subpixel edge gaps)
+      tl.to(galleryFrameContainerRef.current, {
+        width: "103vw",
+        height: "103vh",
+        ease: "power2.inOut",
         duration: EXPAND_DUR
       }, tExpand);
 
-      // 3. Section Reveal: Fade in the "Next Component" inside the sticky wrapper
+      tl.to(mainOuterFrameRef.current, {
+        padding: 0,
+        ease: "power2.inOut",
+        duration: EXPAND_DUR
+      }, tExpand);
+
+      tl.to(innerClipRef.current, {
+        borderRadius: 0,
+        ease: "power2.inOut",
+        duration: EXPAND_DUR
+      }, tExpand);
+
+      // 3. Section Reveal: Split screen UI over the expanded background
       tl.to(nextSectionRef.current, {
         opacity: 1,
+        pointerEvents: "auto",
+        duration: 0.1
+      }, tExpand);
+
+      tl.to(leftGlassRef.current, {
+        xPercent: 0,
         ease: "power2.out",
-        duration: EXPAND_DUR * 0.5
-      }, tExpand + (EXPAND_DUR * 0.5));
+        duration: EXPAND_DUR * 0.8
+      }, tExpand + 0.2);
+
+      tl.to([topNavRef.current, bottomTextRef.current], {
+        opacity: 1,
+        ease: "power2.out",
+        duration: EXPAND_DUR * 0.6
+      }, tExpand + 0.4);
 
     });
 
@@ -151,7 +187,7 @@ export function HorizontalGallery({ slides = DEFAULT_SLIDES }) {
     // Outer container establishes the scroll distance.
     <div
       ref={containerRef}
-      style={{ position: "relative", height: `${(N + EXPAND_DUR) * 100}vh` }}
+      style={{ position: "relative", height: `${TOTAL_DUR * 100}vh` }}
     >
       {/* ── Sticky wrapper ── */}
       <div
@@ -213,13 +249,14 @@ export function HorizontalGallery({ slides = DEFAULT_SLIDES }) {
 
         {/* ── Main frame — the outer boundary with dashed border ── */}
         <div
+          ref={galleryFrameContainerRef}
           style={{
             position: "absolute",
             left: "50%",
             top: "50%",
             transform: "translate(-50%, -50%)",
             width: frameW,
-            aspectRatio: "609 / 784",
+            height: `calc(${frameW} * (784 / 609))`, // Explicit height instead of aspectRatio for GSAP tweening
             zIndex: 10,
           }}
         >
@@ -253,7 +290,7 @@ export function HorizontalGallery({ slides = DEFAULT_SLIDES }) {
           }}>
 
           {/* Inner container to restrict the sliding frame Layers */}
-          <div style={{
+          <div ref={innerClipRef} style={{
             position: "relative",
             width: "100%",
             height: "100%",
@@ -278,8 +315,9 @@ export function HorizontalGallery({ slides = DEFAULT_SLIDES }) {
                 key={s.id}
                 style={{
                   position: "relative",
-                  width: "100%",
+                  width: `${100 / N}%`,
                   height: "100%",
+                  flexShrink: 0,
                   background: s.gradient,
                 }}
               >
@@ -414,31 +452,106 @@ export function HorizontalGallery({ slides = DEFAULT_SLIDES }) {
           </span>
         </div>
 
-        {/* ── EXPANSION PHASE NEXT COMPONENT (Morphs in seamlessly) ── */}
+        {/* ── EXPANSION PHASE NEXT COMPONENT (Frosted UI Overlay) ── */}
         <div
           ref={nextSectionRef}
           style={{
             position: "absolute",
             inset: 0,
             zIndex: 30, // rendered above the zoomed image
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
+            display: "block",
             opacity: 0,
             pointerEvents: "none",
-            backgroundColor: "rgba(0,0,0,0.5)", // slight dim to make text pop
-            backdropFilter: "blur(5px)", // blurs the zoomed-in image background
           }}
         >
-           {/* Replace this div gracefully later with the actual Next Component if needed */}
-           <div style={{ textAlign: "center", color: "#fff" }}>
-               <h2 style={{ fontSize: "5vw", fontWeight: 300, letterSpacing: "-0.02em" }}>
-                 The Next Chapter.
-               </h2>
-               <p style={{ opacity: 0.6, fontSize: "1.2vw", marginTop: "1rem" }}>
-                 Seamlessly transitioned without a section jump.
+          {/* Left Glass Panel */}
+          <div
+            ref={leftGlassRef}
+            style={{
+              position: "absolute",
+              top: 0,
+              left: 0,
+              bottom: 0,
+              width: "35%",
+              minWidth: "420px",
+              background: "linear-gradient(to right, rgba(200,200,200,0.15), rgba(0,0,0,0.0))",
+              backdropFilter: "blur(24px)",
+              WebkitBackdropFilter: "blur(24px)",
+              borderRight: "1px solid rgba(255, 255, 255, 0.1)",
+              padding: "48px 56px",
+              display: "flex",
+              flexDirection: "column",
+              color: "#fff",
+              // GSAP xPercent replaces transform
+            }}
+          >
+             {/* ORYZO */}
+             <div style={{ fontSize: "24px", fontWeight: "700", letterSpacing: "0.15em", marginBottom: "auto", color: "#fff" }}>ORYZO</div>
+             
+             <div style={{ marginTop: "auto" }}>
+               {/* Icon */}
+               <div style={{ width: "42px", height: "42px", borderRadius: "50%", background: "rgba(255,255,255,0.1)", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: "28px", border: "1px solid rgba(255,255,255,0.25)" }}>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                     <line x1="12" y1="19" x2="12" y2="5"></line>
+                     <polyline points="5 12 12 5 19 12"></polyline>
+                  </svg>
+               </div>
+
+               <h3 style={{ fontSize: "15px", textTransform: "uppercase", letterSpacing: "1px", marginBottom: "16px", fontWeight: 600, color: "#fff" }}>
+                 RISE ABOVE MEDIOCRITY
+               </h3>
+               <p style={{ fontSize: "15px", lineHeight: "1.6", color: "rgba(255,255,255,0.75)", marginBottom: "40px" }}>
+                 With a precision-engineered lift (exactly one coaster thick), Oryzo doesn't just hold your mug - it elevates it. Literally. Above every boring surface you've ever known.
                </p>
-           </div>
+
+               {/* Dotted line */}
+               <div style={{ borderBottom: "1px dashed rgba(255,255,255,0.3)", width: "100%", marginBottom: "32px" }} />
+
+               <h2 style={{ fontSize: "28px", fontWeight: "700", textTransform: "uppercase", lineHeight: "1.1", marginBottom: "20px", color: "#fff", letterSpacing: "0.02em" }}>
+                 ELEVATE YOUR<br/>COFFEE EXPERIENCE
+               </h2>
+             </div>
+          </div>
+
+          {/* Top Right Nav */}
+          <div
+            ref={topNavRef}
+            style={{
+              position: "absolute",
+              top: "48px",
+              right: "56px",
+              display: "flex",
+              gap: "32px",
+              fontSize: "11px",
+              fontWeight: "600",
+              letterSpacing: "0.1em",
+              color: "#fff",
+              opacity: 0,
+            }}
+          >
+             <span style={{ opacity: 0.6 }}>INTRO</span>
+             <span style={{ borderBottom: "1px dashed #fff", paddingBottom: "4px" }}>FEATURES</span>
+             <span style={{ opacity: 0.6 }}>PRODUCT</span>
+             <span style={{ opacity: 0.6 }}>CONTACT</span>
+          </div>
+
+          {/* Bottom Right Text */}
+          <div
+            ref={bottomTextRef}
+            style={{
+              position: "absolute",
+              bottom: "48px",
+              right: "56px",
+              display: "flex",
+              alignItems: "center",
+              gap: "24px",
+              color: "#fff",
+              opacity: 0,
+            }}
+          >
+             <span style={{ fontSize: "12px", fontWeight: "500", opacity: 0.8, letterSpacing: "0.05em" }}>Constant lift via geometry</span>
+             <span style={{ fontSize: "40px", fontFamily: "serif", fontStyle: "italic", lineHeight: 1 }}>Δh ≈ t</span>
+          </div>
         </div>
 
       </div>
