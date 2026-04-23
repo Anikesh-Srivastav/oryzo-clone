@@ -9,8 +9,10 @@ Title: Pencil
 import React, { useRef } from 'react'
 import { useGLTF } from '@react-three/drei'
 
+const PENCIL_MODEL_URL = '/models/pencil.v1.glb'
+
 export function Model(props) {
-    const { nodes, materials } = useGLTF('/models/pencil.glb')
+    const { nodes, materials } = useGLTF(PENCIL_MODEL_URL)
     return (
         <group {...props} dispose={null}>
             <group position={[16.901, -6.654, -13.896]} rotation={[-1.973, 0.445, 1.71]}>
@@ -44,4 +46,4 @@ export function Model(props) {
     )
 }
 
-useGLTF.preload('/models/pencil.glb')
+useGLTF.preload(PENCIL_MODEL_URL)

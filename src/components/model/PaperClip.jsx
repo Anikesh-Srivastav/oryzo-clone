@@ -9,8 +9,10 @@ Title: Paperclip
 import React, { useRef } from 'react'
 import { useGLTF } from '@react-three/drei'
 
+const PAPERCLIP_MODEL_URL = '/models/paperclip.v1.glb'
+
 export function Model(props) {
-    const { nodes, materials } = useGLTF('/models/paperclip.glb')
+    const { nodes, materials } = useGLTF(PAPERCLIP_MODEL_URL)
     return (
         <group {...props} dispose={null}>
             <group rotation={[0.83, -0.292, 0.283]} scale={0.013}>
@@ -27,5 +29,4 @@ export function Model(props) {
     )
 }
 
-useGLTF.preload('/models/paperclip.glb')
-
+useGLTF.preload(PAPERCLIP_MODEL_URL)

@@ -9,8 +9,10 @@ Title: Tool Tajima Cutter
 import React, { useRef } from 'react'
 import { useGLTF } from '@react-three/drei'
 
+const PAPER_CUTTER_MODEL_URL = '/models/tool_tajima_cutter.v1.glb'
+
 export function Model(props) {
-    const { nodes, materials } = useGLTF('/models/tool_tajima_cutter.glb')
+    const { nodes, materials } = useGLTF(PAPER_CUTTER_MODEL_URL)
     return (
         <group {...props} dispose={null}>
             <group rotation={[-0.686, -0.053, 0.065]}>
@@ -60,4 +62,4 @@ export function Model(props) {
     )
 }
 
-useGLTF.preload('/models/tool_tajima_cutter.glb')
+useGLTF.preload(PAPER_CUTTER_MODEL_URL)

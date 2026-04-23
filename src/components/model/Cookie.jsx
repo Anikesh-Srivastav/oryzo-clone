@@ -1,8 +1,10 @@
 import React, { useRef } from 'react'
 import { useGLTF } from '@react-three/drei'
 
+const COOKIE_MODEL_URL = '/models/cookie_school_project.v1.glb'
+
 export function Model(props) {
-    const { nodes, materials } = useGLTF('/models/cookie_school_project.glb')
+    const { nodes, materials } = useGLTF(COOKIE_MODEL_URL)
     return (
         <group {...props} dispose={null}>
             <mesh
@@ -15,4 +17,4 @@ export function Model(props) {
     )
 }
 
-useGLTF.preload('/models/cookie_school_project.glb')
+useGLTF.preload(COOKIE_MODEL_URL)
