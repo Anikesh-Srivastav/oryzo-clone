@@ -72,7 +72,7 @@ export function Scene({ progressRef }) {
     const spin  = t < 0.80 ? spinC : spinD;
 
     if (cookieRef.current) {
-      cookieRef.current.scale.lerp(vec.set(scaleA, scaleA, scaleA), 7 * delta);
+      cookieRef.current.scale.lerp(vec.set(scaleA, scaleA, scaleA), 7 * dt);
       cookieRef.current.rotation.x = THREE.MathUtils.lerp(cookieRef.current.rotation.x, tilt, 5 * dt);
       cookieRef.current.rotation.y = THREE.MathUtils.lerp(cookieRef.current.rotation.y, spin, 4 * dt);
       if (t > 0.28 && t < 0.55) cookieRef.current.rotation.z -= dt * 0.04;

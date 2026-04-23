@@ -74,11 +74,35 @@ export function LoaderOverlay() {
   const visualRef = useRef(null);
   const dismissed = useRef(false);
 
+  // Smooth-interpolation refs — updated directly on DOM, bypassing React re-renders
+  const displayRef  = useRef(0);   // tracks the interpolated progress value
+  const sweepRef    = useRef(null); // the conic-gradient div
+  const textValRef  = useRef(null); // the % span
+
   // Lock scroll while the overlay is visible
   useEffect(() => {
     document.body.style.overflow = "hidden";
     return () => { document.body.style.overflow = ""; };
   }, []);
+
+  // Smoothly interpolate the displayed progress so chunky asset-load jumps feel continuous
+  useEffect(() => {
+    const tween = gsap.to(displayRef, {
+      current: progress,
+      duration: 0.7,
+      ease: "power1.out",
+      overwrite: "auto",
+      onUpdate: () => {
+        const val = displayRef.current;
+        if (textValRef.current)
+          textValRef.current.textContent = `${Math.round(val)}%`;
+        if (sweepRef.current)
+          sweepRef.current.style.background =
+            `conic-gradient(rgba(255,255,255,0.12) ${val}%, transparent 0)`;
+      },
+    });
+    return () => tween.kill();
+  }, [progress]);
 
   const dismiss = () => {
     if (dismissed.current || !wrapperRef.current) return;
@@ -153,11 +177,12 @@ export function LoaderOverlay() {
 
         {/* ── CONIC PROGRESS SWEEP ── */}
         <div
+          ref={sweepRef}
           style={{
             position: "absolute",
             inset: 0,
             borderRadius: "50%",
-            background: `conic-gradient(rgba(255,255,255,0.12) ${progress}%, transparent 0)`,
+            background: "conic-gradient(rgba(255,255,255,0.12) 0%, transparent 0)",
             zIndex: 2,
           }}
         />
@@ -208,7 +233,7 @@ export function LoaderOverlay() {
           zIndex: 10,
         }}
       >
-        LOADING MODELS <span style={{ color: "rgba(255,255,255,0.8)" }}>{Math.round(progress)}%</span>
+        LOADING MODELS <span ref={textValRef} style={{ color: "rgba(255,255,255,0.8)" }}>0%</span>
       </div>
     </div>
   );
