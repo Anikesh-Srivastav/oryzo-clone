@@ -6,28 +6,28 @@ import { Scene } from "./Scene";
 import { LoaderOverlay } from "./LoaderOverlay";
 
 export function Hero() {
-  const wrapperRef  = useRef(null);
+  const wrapperRef = useRef(null);
   const progressRef = useRef(0);
 
   // DOM refs for direct opacity control — more reliable than CSS calc(var())
-  const deskBgRef    = useRef(null);
-  const darkOverRef  = useRef(null);
-  const phase1Ref    = useRef(null);
-  const p2NavRef     = useRef(null);
-  const p2LeftRef    = useRef(null);
-  const p2RightRef   = useRef(null);
+  const deskBgRef = useRef(null);
+  const darkOverRef = useRef(null);
+  const phase1Ref = useRef(null);
+  const p2NavRef = useRef(null);
+  const p2LeftRef = useRef(null);
+  const p2RightRef = useRef(null);
   const scrollHintRef = useRef(null);
 
   useEffect(() => {
     const clamp = (v, lo, hi) => Math.min(Math.max(v, lo), hi);
-    const map   = (v, a, b, c, d) => c + ((v - a) / (b - a)) * (d - c);
+    const map = (v, a, b, c, d) => c + ((v - a) / (b - a)) * (d - c);
 
     const onScroll = () => {
       const el = wrapperRef.current;
       if (!el) return;
       const scrolled = -el.getBoundingClientRect().top;
-      const total    = el.offsetHeight - window.innerHeight;
-      const p        = clamp(scrolled / total, 0, 1);
+      const total = el.offsetHeight - window.innerHeight;
+      const p = clamp(scrolled / total, 0, 1);
       progressRef.current = p;
 
       // ── Desk BG: visible at p=0, invisible by p=0.28 ──
@@ -51,10 +51,10 @@ export function Hero() {
         p2NavRef.current.style.opacity = clamp(map(p, 0.33, 0.45, 0, 1), 0, 1);
 
       // ── Phase 2 feature texts: fade IN 0.38→0.52, fade OUT 0.82→0.95 ──
-      const fadeIn  = clamp(map(p, 0.38, 0.52, 0, 1), 0, 1);
+      const fadeIn = clamp(map(p, 0.38, 0.52, 0, 1), 0, 1);
       const fadeOut = clamp(map(p, 0.82, 0.95, 1, 0), 0, 1);
-      const p2Op    = Math.min(fadeIn, fadeOut);
-      if (p2LeftRef.current)  p2LeftRef.current.style.opacity  = p2Op;
+      const p2Op = Math.min(fadeIn, fadeOut);
+      if (p2LeftRef.current) p2LeftRef.current.style.opacity = p2Op;
       if (p2RightRef.current) p2RightRef.current.style.opacity = p2Op;
     };
 
