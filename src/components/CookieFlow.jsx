@@ -13,6 +13,19 @@ const BASE_SCALE      = 1.0;         // size multiplier at rest
 const LIT_SCALE       = 1.22;        // size multiplier when lit
 const LERP_SPEED      = 0.10;        // interpolation rate (0–1)
 
+// ─── Stream Strands Config ─────────────────────────────────────────────────────
+const STRAND_COUNT = 7;
+// Generate deterministic strand parameters so they stay consistent
+const STRANDS = Array.from({ length: STRAND_COUNT }, (_, s) => ({
+  offset: (s / (STRAND_COUNT - 1) - 0.5) * 120, // narrow spread for a tightly bundled river
+  A1: 40 + Math.sin(s * 1.1) * 20,              // gentle primary wave
+  f1: 1.5 + Math.cos(s * 0.8) * 1,
+  phase1: s * 2.3,
+  A2: 20 + Math.cos(s * 1.7) * 15,              // gentle secondary wave
+  f2: 3 + Math.sin(s * 1.4) * 1.5,
+  phase2: s * 1.9
+}));
+
 // ─── Cookie sprite drawing ─────────────────────────────────────────────────────
 // Draws a procedural cookie: disc + chips + sugary surface cracks
 function drawCookie(ctx, cx, cy, r, angle, warmth) {
@@ -96,32 +109,26 @@ function drawCookie(ctx, cx, cy, r, angle, warmth) {
 
 // ─── Particle factory ──────────────────────────────────────────────────────────
 function makeCookie(W, H, i, total) {
-  const col = i % 10;
-  const baseX = (col / 9) * W;
   return {
-    // position
-    x: baseX + (Math.random() - 0.5) * W * 0.12,
-    y: Math.random() * H,
-    // velocity — slow diagonal drift
-    vx: (Math.random() - 0.3) * 0.35,
-    vy: 0.38 + Math.random() * 0.32,
+    strandIdx: i % STRAND_COUNT,
+    progress: Math.random(), // start randomly along the stream
+    speed: 0.0005 + Math.random() * 0.0004, // flow speed
+    thickness: (Math.random() - 0.5) * 25,  // tight random scatter from the strand line
+    
     // spin
     angle: Math.random() * Math.PI * 2,
     spinV: (0.003 + Math.random() * 0.005) * (Math.random() < 0.5 ? 1 : -1),
     // size
     radius: 11 + Math.random() * 14,
-    // base lane for wrapping
-    baseX,
     // smoothed values
     opacity: 0,
     scale: BASE_SCALE,
     // repulsion impulse (decays)
     rx: 0,
     ry: 0,
-    // weave oscillation
-    waveA: 8 + Math.random() * 14,       // amplitude px
-    waveF: 0.0004 + Math.random() * 0.0003, // frequency
-    waveP: Math.random() * Math.PI * 2,  // phase
+    // world position
+    x: -999,
+    y: -999,
   };
 }
 
@@ -199,21 +206,55 @@ export function CookieFlow({ style }) {
       // Using a stable sort on the pre-sorted array isn't necessary every frame;
       // just draw in current order — adequate for a particle field.
 
+      // ── Stream Path Setup ───────────────────────────────────────────────────
+      // We define a base diagonal from top-left to bottom-right.
+      const startX = -300;
+      const startY = -300;
+      const endX = W + 300;
+      const endY = H + 300;
+      const streamDx = endX - startX;
+      const streamDy = endY - startY;
+      const streamLen = Math.sqrt(streamDx * streamDx + streamDy * streamDy);
+      const dirX = streamDx / streamLen;
+      const dirY = streamDy / streamLen;
+      const perpX = -dirY; // Perpendicular vector for strand offset and waves
+      const perpY = dirX;
+
       for (let i = 0; i < cookies.length; i++) {
         const c = cookies[i];
+        const st = STRANDS[c.strandIdx];
 
-        // ── Weave (horizontal sine oscillation) ──────────────────────────────
-        const waveX = c.waveA * Math.sin(c.waveF * t + c.waveP);
+        // ── Stream Progress ───────────────────────────────────────────────────
+        c.progress += c.speed;
+        if (c.progress > 1) {
+          c.progress = 0;
+          c.thickness = (Math.random() - 0.5) * 25; // randomize tight thickness on respawn
+        }
+
+        // ── Base Stream Curve ─────────────────────────────────────────────────
+        const bx = startX + streamDx * c.progress;
+        const by = startY + streamDy * c.progress;
+
+        const wave = st.A1 * Math.sin(c.progress * Math.PI * 2 * st.f1 + st.phase1) +
+                     st.A2 * Math.sin(c.progress * Math.PI * 2 * st.f2 + st.phase2);
+                     
+        const totalPerp = st.offset + wave + c.thickness;
+
+        // Target position on the curvy stream
+        const tx = bx + perpX * totalPerp;
+        const ty = by + perpY * totalPerp;
 
         // ── Repulsion decay ───────────────────────────────────────────────────
         c.rx *= 0.88;
         c.ry *= 0.88;
 
+        // Current actual position
+        c.x = tx + c.rx;
+        c.y = ty + c.ry;
+
         // ── Distance to cursor ────────────────────────────────────────────────
-        const ex = c.x + waveX;
-        const ey = c.y;
-        const dx = ex - mouse.x;
-        const dy = ey - mouse.y;
+        const dx = c.x - mouse.x;
+        const dy = c.y - mouse.y;
         const dist = Math.sqrt(dx * dx + dy * dy);
 
         // ── Soft radial falloff → litRatio ────────────────────────────────────
@@ -230,18 +271,8 @@ export function CookieFlow({ style }) {
           c.ry += (dy / dist) * force * 0.045;
         }
 
-        // ── Move ──────────────────────────────────────────────────────────────
-        c.x     += c.vx + c.rx;
-        c.y     += c.vy + c.ry;
+        // ── Spin ──────────────────────────────────────────────────────────────
         c.angle += c.spinV;
-
-        // ── Wrap ──────────────────────────────────────────────────────────────
-        if (c.y > H + c.radius + 10) {
-          c.y = -(c.radius + 10);
-          c.x = c.baseX + (Math.random() - 0.5) * W * 0.12;
-        }
-        if (c.x < -c.radius - 30) c.x = W + c.radius + 30;
-        if (c.x > W + c.radius + 30) c.x = -c.radius - 30;
 
         // ── Lerp visual state ─────────────────────────────────────────────────
         const targetOpacity = BASE_OPACITY + targetLit * (LIT_OPACITY - BASE_OPACITY);
@@ -255,7 +286,7 @@ export function CookieFlow({ style }) {
         const warmth = Math.round(targetLit * 55);
 
         ctx.globalAlpha = c.opacity;
-        drawCookie(ctx, c.x + waveX, c.y, r, c.angle, warmth);
+        drawCookie(ctx, c.x, c.y, r, c.angle, warmth);
         ctx.globalAlpha = 1;
       }
     };
